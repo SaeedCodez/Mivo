@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>New Tab</title>
+<style>/*STYLE*/</style>
+</head>
+<body>
+<header class="header">
+  <div class="brand"><span class="brand-dot"></span>MIVO</div>
+  <nav class="nav">
+    <button class="btn-ghost" type="button">About</button>
+    <button class="btn-ghost" type="button">Settings</button>
+  </nav>
+</header>
+
+<main class="main">
+  <div class="stack">
+    <section class="clock">
+      <div class="time" id="time"></div>
+      <div class="date" id="date"></div>
+    </section>
+
+    <form class="search" id="search" role="search" autocomplete="off">
+      <svg class="search-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.75" cy="8.75" r="5.25"/><path d="M12.75 12.75 17 17"/></svg>
+      <input class="search-input" id="q" type="text" name="q" placeholder="Search or type a URL" aria-label="Search or type a URL" spellcheck="false" autocapitalize="off" enterkeyhint="go">
+      <kbd class="search-hint" aria-hidden="true">/</kbd>
+    </form>
+
+    <!-- Reserved for the bookmarks row so the clock never shifts when it lands. -->
+    <div class="shortcuts" id="shortcuts"></div>
+  </div>
+</main>
+
+<footer class="footer">
+  <span id="greeting"></span>
+  <span></span>
+</footer>
+
+<script src="newtab.js"></script>
+</body>
+</html>
