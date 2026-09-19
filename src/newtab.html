@@ -11,8 +11,8 @@
 <header class="header">
   <div class="brand"><span class="brand-dot"></span>MIVO</div>
   <nav class="nav">
-    <button class="btn-ghost" type="button">About</button>
-    <button class="btn-ghost" type="button">Settings</button>
+    <button class="btn btn-ghost" type="button">About</button>
+    <button class="btn btn-ghost" type="button">Settings</button>
   </nav>
 </header>
 
@@ -29,14 +29,16 @@
       <kbd class="search-hint" aria-hidden="true">/</kbd>
     </form>
 
-    <!-- Reserved for the bookmarks row so the clock never shifts when it lands. -->
-    <div class="shortcuts" id="shortcuts"></div>
+    <section class="bookmarks" id="bookmarks" aria-label="Bookmarks">
+      <div class="shortcuts" id="shortcuts"></div>
+      <button class="add" id="add" type="button"><span>Add</span></button>
+    </section>
   </div>
 </main>
 
 <footer class="footer">
   <span id="greeting"></span>
-  <span></span>
+  <span id="meta"></span>
 </footer>
 
 <script src="newtab.js"></script>

@@ -1,5 +1,9 @@
 // Runs synchronously at the end of <body>, so the first paint already has the
-// correct time. Keep this file tiny: it is on the critical path of every new tab.
+// time and the bookmarks. Keep the work in here small: it is on the critical
+// path of every new tab.
+import { initBookmarks } from "./bookmarks";
+import { isDialogOpen } from "./dialogs";
+import { toUrl } from "./url";
 
 const DAYS = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -42,23 +46,36 @@ document.addEventListener("visibilitychange", () => {
   if (!document.hidden) tick();
 });
 
+// --- Footer meta + bookmarks ------------------------------------------------
+
+const metaEl = $("meta");
+let tabCount = 0;
+let bookmarkCount = 0;
+
+function renderMeta() {
+  const parts: string[] = [];
+  if (tabCount) parts.push(tabCount + (tabCount === 1 ? " TAB" : " TABS"));
+  if (bookmarkCount) parts.push(bookmarkCount + (bookmarkCount === 1 ? " BOOKMARK" : " BOOKMARKS"));
+  set(metaEl, parts.join(" · "));
+}
+
+initBookmarks((count) => {
+  bookmarkCount = count;
+  renderMeta();
+});
+
+// Counting tabs needs no permission; it just isn't available on a plain web page.
+if (typeof chrome !== "undefined" && chrome.tabs) {
+  chrome.tabs.query({}).then((tabs) => {
+    tabCount = tabs.length;
+    renderMeta();
+  });
+}
+
 // --- Search ---------------------------------------------------------------
 
 const form = $<HTMLFormElement>("search");
 const input = $<HTMLInputElement>("q");
-
-const HAS_SCHEME = /^([a-z][a-z\d+.-]*:\/\/|about:)/i;
-const LOOKS_LIKE_HOST =
-  /^(localhost|(\d{1,3}\.){3}\d{1,3}|([a-z\d-]+\.)+[a-z]{2,})(:\d+)?([/?#]\S*)?$/i;
-
-function toUrl(value: string): string | null {
-  if (HAS_SCHEME.test(value)) return value;
-  if (LOOKS_LIKE_HOST.test(value)) {
-    const local = /^(localhost|\d)/i.test(value);
-    return (local ? "http://" : "https://") + value;
-  }
-  return null;
-}
 
 form.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -71,7 +88,8 @@ form.addEventListener("submit", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "/" && document.activeElement !== input && !e.metaKey && !e.ctrlKey && !e.altKey) {
+  const typing = (e.target as HTMLElement).closest("input, textarea, [contenteditable]");
+  if (e.key === "/" && !typing && !isDialogOpen() && !e.metaKey && !e.ctrlKey && !e.altKey) {
     e.preventDefault();
     input.focus();
   } else if (e.key === "Escape" && document.activeElement === input) {
