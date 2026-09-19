@@ -37,8 +37,39 @@ export interface Store {
   openInNewTab(url: string): void;
 }
 
+export type ClockFont = "dot" | "mono";
+export type TileStyle = "favicon" | "letter";
+
+export interface Settings {
+  clock: ClockFont;
+  tiles: TileStyle;
+}
+
+/** Details of the uploaded background, kept next to the image itself. */
+export interface BackgroundInfo {
+  name: string;
+  /** Size of the original file, not of the stored copy. */
+  width: number;
+  height: number;
+  bytes: number;
+}
+
+/** Preferences and the background image; the on-demand Settings screen talks to this. */
+export interface SettingsStore {
+  get(): Settings;
+  set(patch: Partial<Settings>): void;
+  background(): BackgroundInfo | undefined;
+  /** Object URL of the stored image, once it has been read. */
+  backgroundUrl(): string | undefined;
+  setBackground(image: Blob, info: BackgroundInfo): Promise<void>;
+  clearBackground(): Promise<void>;
+  /** Fires whenever a preference or the background image changes. */
+  subscribe(listener: () => void): () => void;
+}
+
 /** Everything that is only needed once the user interacts (ui.js). */
 export interface UI {
+  openSettings(settings: SettingsStore): void;
   addMenu(store: Store, anchor: DOMRect): void;
   bookmarkMenu(store: Store, bookmark: Bookmark, x: number, y: number): void;
   folderMenu(store: Store, folder: Folder, x: number, y: number): void;

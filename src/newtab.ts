@@ -2,6 +2,8 @@
 // time and the bookmarks. Keep the work in here small: it is on the critical
 // path of every new tab.
 import { initBookmarks } from "./bookmarks";
+import { settings } from "./settings";
+import { withUI } from "./ui-loader";
 import { toUrl } from "./url";
 
 const DAYS = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
@@ -71,6 +73,8 @@ if (typeof chrome !== "undefined" && chrome.tabs) {
   });
 }
 
+$("settings-open").addEventListener("click", () => withUI((ui) => ui.openSettings(settings)));
+
 // --- Search ---------------------------------------------------------------
 
 const form = $<HTMLFormElement>("search");
@@ -88,7 +92,7 @@ form.addEventListener("submit", (e) => {
 
 document.addEventListener("keydown", (e) => {
   const typing = (e.target as HTMLElement).closest("input, textarea, [contenteditable]");
-  if (e.key === "/" && !typing && !document.querySelector(".scrim") && !e.metaKey && !e.ctrlKey && !e.altKey) {
+  if (e.key === "/" && !typing && !document.querySelector(".scrim, .settings") && !e.metaKey && !e.ctrlKey && !e.altKey) {
     e.preventDefault();
     input.focus();
   } else if (e.key === "Escape" && document.activeElement === input) {

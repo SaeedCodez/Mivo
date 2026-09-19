@@ -24,5 +24,5 @@ Load it: `chrome://extensions` → enable Developer mode → **Load unpacked** �
 
 ## Status
 
-Implemented: header, clock + date, search / URL bar (`/` focuses it), footer greeting and tab / bookmark counts, bookmarks (tiles, add, edit, delete, context menu) and folders (tiles with icon grid, new / edit / delete, move to folder, folder contents view).
-Not yet: About / Settings screens.
+Implemented: header, clock + date, search / URL bar (`/` focuses it), footer greeting and tab / bookmark counts, bookmarks (tiles, add, edit, delete, context menu) and folders (tiles with icon grid, new / edit / delete, move to folder, folder contents view), Settings (clock font, bookmark style, custom background).
+Not yet: About screen; syncing settings and bookmarks across devices.

@@ -1,7 +1,9 @@
 import { ICON } from "./icons";
 import { buildMinis } from "./minis";
+import { settings } from "./settings";
 import { load, save } from "./store";
-import type { Bookmark, BookmarkDraft, Folder, Store, UI } from "./types";
+import type { Bookmark, BookmarkDraft, Folder, Store } from "./types";
+import { warmUI, withUI } from "./ui-loader";
 import { monogram } from "./url";
 
 const section = document.getElementById("bookmarks") as HTMLElement;
@@ -21,7 +23,7 @@ function tile(b: Bookmark): HTMLAnchorElement {
   a.dataset.id = b.id;
   a.draggable = false;
 
-  if (b.icon) {
+  if (b.icon && settings.get().tiles === "favicon") {
     const img = new Image(40, 40);
     img.className = "tile-icon";
     img.src = b.icon;
@@ -145,35 +147,19 @@ const store: Store = {
   openInNewTab,
 };
 
-// --- On-demand UI --------------------------------------------------------------
-
-let uiLoad: Promise<UI> | undefined;
-
-function loadUI(): Promise<UI> {
-  uiLoad ??= new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "ui.js";
-    script.onload = () => resolve(window.mivoUI!);
-    script.onerror = () => {
-      uiLoad = undefined;
-      reject(new Error("Could not load ui.js"));
-    };
-    document.head.append(script);
-  });
-  return uiLoad;
-}
-
-const withUI = (run: (ui: UI) => void) => void loadUI().then(run, () => {});
-
 export function initBookmarks(countChanged: (count: number) => void) {
   onCount = countChanged;
   addButton.insertAdjacentHTML("afterbegin", ICON.plus);
   render();
 
-  // Warm up the dialogs once the page has painted, so the first click is instant.
-  const warm = () => void loadUI().catch(() => {});
-  if ("requestIdleCallback" in window) requestIdleCallback(warm, { timeout: 2000 });
-  else setTimeout(warm, 500);
+  warmUI();
+
+  let tileStyle = settings.get().tiles;
+  settings.subscribe(() => {
+    if (settings.get().tiles === tileStyle) return;
+    tileStyle = settings.get().tiles;
+    render();
+  });
 
   addButton.addEventListener("click", () => {
     const anchor = addButton.getBoundingClientRect();

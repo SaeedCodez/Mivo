@@ -5,6 +5,7 @@ import type { UI } from "./types";
 import { openBookmarkDialog, openDeleteBookmarkDialog } from "./ui/bookmark-dialog";
 import { openDeleteFolderDialog, openFolderDialog, openFolderView, openMovePicker } from "./ui/folder-dialog";
 import { openMenu } from "./ui/shell";
+import { openSettings } from "./ui/settings";
 
 const ui: UI = {
   addMenu(store, anchor) {
@@ -39,6 +40,7 @@ const ui: UI = {
   },
 
   openFolder: openFolderView,
+  openSettings,
 };
 
 window.mivoUI = ui;

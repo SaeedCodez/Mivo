@@ -16,7 +16,8 @@ const ascii = Array.from({ length: 95 }, (_, i) => String.fromCharCode(32 + i)).
 
 const fonts = [
   { family: "Doto", weight: 700, file: "@fontsource/doto/files/doto-latin-700-normal.woff2", chars: "0123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ" },
-  { family: "Space Mono", weight: 400, file: "@fontsource/space-mono/files/space-mono-latin-400-normal.woff2", chars: ascii + "·" },
+  { family: "Space Mono", weight: 400, file: "@fontsource/space-mono/files/space-mono-latin-400-normal.woff2", chars: ascii + "·×" },
+  { family: "Space Mono", weight: 700, file: "@fontsource/space-mono/files/space-mono-latin-700-normal.woff2", chars: "0123456789:" },
   { family: "Space Grotesk", weight: 400, file: "@fontsource/space-grotesk/files/space-grotesk-latin-400-normal.woff2", chars: ascii + "·’" },
   { family: "Space Grotesk", weight: 500, file: "@fontsource/space-grotesk/files/space-grotesk-latin-500-normal.woff2", chars: ascii + "’" },
 ];

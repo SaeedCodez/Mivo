@@ -15,6 +15,8 @@ export const ICON = {
   bookmark: svg("M4 2H12V14L8 11.3333L4 14V2Z"),
   chevron: svg("M4 6L8 10L12 6"),
   check: svg("M3.3334 8L6.6667 11.3333L12.6667 4.6667"),
+  /** 24px upload arrow for the background drop zone. */
+  upload: `<svg viewBox="-4 -4 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" aria-hidden="true"><path d="M8 12V0M8 0L3 5M8 0L13 5M0 16H16"/></svg>`,
   /** 12px check drawn inside the checkbox. */
   tick: `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg>`,
 };
