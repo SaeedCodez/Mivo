@@ -2,7 +2,6 @@
 // time and the bookmarks. Keep the work in here small: it is on the critical
 // path of every new tab.
 import { initBookmarks } from "./bookmarks";
-import { isDialogOpen } from "./dialogs";
 import { toUrl } from "./url";
 
 const DAYS = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
@@ -89,7 +88,7 @@ form.addEventListener("submit", (e) => {
 
 document.addEventListener("keydown", (e) => {
   const typing = (e.target as HTMLElement).closest("input, textarea, [contenteditable]");
-  if (e.key === "/" && !typing && !isDialogOpen() && !e.metaKey && !e.ctrlKey && !e.altKey) {
+  if (e.key === "/" && !typing && !document.querySelector(".scrim") && !e.metaKey && !e.ctrlKey && !e.altKey) {
     e.preventDefault();
     input.focus();
   } else if (e.key === "Escape" && document.activeElement === input) {

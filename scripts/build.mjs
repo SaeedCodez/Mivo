@@ -55,9 +55,11 @@ const minHtml = html
 
 await writeFile(join(dist, "newtab.html"), minHtml);
 
+// newtab.js is the only script on the critical path; ui.js (dialogs, menus) is
+// loaded after the first paint.
 await build({
-  entryPoints: [join(src, "newtab.ts")],
-  outfile: join(dist, "newtab.js"),
+  entryPoints: { newtab: join(src, "newtab.ts"), ui: join(src, "ui.ts") },
+  outdir: dist,
   bundle: true,
   minify: true,
   format: "iife",

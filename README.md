@@ -19,10 +19,10 @@ Load it: `chrome://extensions` → enable Developer mode → **Load unpacked** �
 - One ~1.4 KB script, run synchronously at the end of `<body>`, fills the clock before the first paint.
 - No service worker, no content scripts, no runtime dependencies. Permissions: `search` (search box) and `favicon` (read the icon Chrome already has for a bookmarked site).
 - Bookmarks live in `localStorage`, which is synchronous, so tiles are in the DOM before the first paint. Favicons are stored with each bookmark as a data URL when it is saved.
-- Dialogs and the context menu are built on first use.
+- Dialogs, menus and the folder screens live in a separate `ui.js`, fetched after the first paint (`newtab.js` is ~7 KB). Their DOM is built on first use.
 - The clock wakes once per minute, on the minute boundary.
 
 ## Status
 
-Implemented: header, clock + date, search / URL bar (`/` focuses it), footer greeting and tab / bookmark counts, bookmarks (tiles, add, edit, delete, context menu).
-Not yet: folders (the "Move to folder" item, folder field and "New folder" menu entry are left out), About / Settings screens.
+Implemented: header, clock + date, search / URL bar (`/` focuses it), footer greeting and tab / bookmark counts, bookmarks (tiles, add, edit, delete, context menu) and folders (tiles with icon grid, new / edit / delete, move to folder, folder contents view).
+Not yet: About / Settings screens.

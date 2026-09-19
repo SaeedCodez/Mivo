@@ -1,93 +1,19 @@
-// Modals and the context menu. Their DOM is built on first use, so none of it
-// costs anything while a new tab is loading.
-import { fetchFavicon } from "./favicon";
-import { ICON } from "./icons";
-import type { Bookmark } from "./store";
-import { autoName, hostOf, monogram, toUrl } from "./url";
-
-const html = (markup: string) => {
-  const t = document.createElement("template");
-  t.innerHTML = markup.trim();
-  return t.content.firstElementChild as HTMLElement;
-};
-
-const $ = <T extends HTMLElement>(root: ParentNode, selector: string) => root.querySelector(selector) as T;
-
-const FOCUSABLE = 'button:not([disabled]), input, [href], [tabindex]:not([tabindex="-1"])';
-
-// --- Modal shell -----------------------------------------------------------
-
-let active: { scrim: HTMLElement; opener: Element | null; dispose: () => void } | null = null;
-
-function closeDialog(restoreFocus = true) {
-  if (!active) return;
-  const { scrim, opener, dispose } = active;
-  active = null;
-  dispose();
-  scrim.remove();
-  if (restoreFocus && opener instanceof HTMLElement && opener.isConnected) opener.focus();
-}
-
-function showDialog(scrim: HTMLElement, focus: HTMLElement) {
-  closeMenu();
-  closeDialog(false);
-  const opener = document.activeElement;
-
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      e.stopPropagation();
-      closeDialog();
-    } else if (e.key === "Tab") {
-      const items = [...scrim.querySelectorAll<HTMLElement>(FOCUSABLE)];
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (!first || !last) return;
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-  };
-  const onDown = (e: MouseEvent) => {
-    if (e.target === scrim) closeDialog();
-  };
-
-  document.addEventListener("keydown", onKey, true);
-  scrim.addEventListener("mousedown", onDown);
-  scrim.addEventListener("click", (e) => {
-    if ((e.target as HTMLElement).closest("[data-close]")) closeDialog();
-  });
-
-  active = {
-    scrim,
-    opener,
-    dispose: () => document.removeEventListener("keydown", onKey, true),
-  };
-  document.body.append(scrim);
-  focus.focus();
-}
-
-export const isDialogOpen = () => active !== null;
-
-// --- Add / edit ------------------------------------------------------------
-
-export interface BookmarkDraft {
-  name: string;
-  url: string;
-  icon?: string;
-}
+import { fetchFavicon } from "../favicon";
+import { ICON } from "../icons";
+import type { Bookmark, Store } from "../types";
+import { autoName, hostOf, monogram, toUrl } from "../url";
+import { openFolderDialog } from "./folder-dialog";
+import { $, closeDialog, html, openMenu, showDialog, type MenuEntry } from "./shell";
 
 interface BookmarkDialogOptions {
+  store: Store;
+  /** Editing this bookmark; otherwise a new one is created. */
   bookmark?: Bookmark;
-  onSave(draft: BookmarkDraft): void;
-  onDelete?(): void;
+  /** Folder to preselect for a new bookmark. */
+  folderId?: string;
 }
 
-export function openBookmarkDialog({ bookmark, onSave, onDelete }: BookmarkDialogOptions) {
+export function openBookmarkDialog({ store, bookmark, folderId: initialFolder }: BookmarkDialogOptions) {
   const edit = !!bookmark;
 
   const scrim = html(`
@@ -114,6 +40,12 @@ export function openBookmarkDialog({ bookmark, onSave, onDelete }: BookmarkDialo
               <input class="field-box" id="bookmark-name" type="text" placeholder="Site name" autocomplete="off" spellcheck="false">
             </div>
           </div>
+          <div class="field">
+            <span class="field-label" id="folder-label">Folder</span>
+            <button class="field-box select" type="button" aria-haspopup="menu" aria-labelledby="folder-label folder-value">
+              <span class="select-value" id="folder-value"></span>${ICON.chevron}
+            </button>
+          </div>
           <div class="modal-foot"></div>
         </form>
       </div>
@@ -127,6 +59,8 @@ export function openBookmarkDialog({ bookmark, onSave, onDelete }: BookmarkDialo
   const nameInput = $<HTMLInputElement>(scrim, "#bookmark-name");
   const helper = $(scrim, ".field-helper");
   const preview = $(scrim, ".fav-preview");
+  const select = $<HTMLButtonElement>(scrim, ".select");
+  const selectValue = $(scrim, ".select-value");
   const foot = $(scrim, ".modal-foot");
   const form = $<HTMLFormElement>(scrim, "form");
 
@@ -148,6 +82,7 @@ export function openBookmarkDialog({ bookmark, onSave, onDelete }: BookmarkDialo
   let iconFor = bookmark?.url ?? "";
   let iconLoad: Promise<void> = Promise.resolve();
   let timer = 0;
+  let folderId = bookmark ? bookmark.folderId : initialFolder;
 
   const parsed = () => toUrl(urlInput.value.trim());
 
@@ -183,6 +118,46 @@ export function openBookmarkDialog({ bookmark, onSave, onDelete }: BookmarkDialo
     urlField.classList.toggle("is-error", on);
     helper.hidden = !on;
   }
+
+  function renderSelect() {
+    const folder = store.folders().find((f) => f.id === folderId);
+    if (!folder) folderId = undefined;
+    selectValue.textContent = folder ? folder.name : "No folder";
+    select.classList.toggle("is-empty", !folder);
+  }
+
+  function openPicker() {
+    const rect = select.getBoundingClientRect();
+    const count = (id: string) => store.bookmarks().filter((b) => b.folderId === id).length;
+    const entries: MenuEntry[] = [
+      { label: "No folder", selected: !folderId, run: () => pick(undefined) },
+      ...store.folders().map((f) => ({
+        label: f.name,
+        end: String(count(f.id)),
+        selected: f.id === folderId,
+        run: () => pick(f.id),
+      })),
+      "divider",
+      {
+        label: "New folder",
+        icon: ICON.plus,
+        run: () => openFolderDialog({ store, onCreated: (f) => pick(f.id) }),
+      },
+    ];
+    select.classList.add("is-open");
+    openMenu(rect.left, rect.bottom + 8, entries, {
+      width: rect.width,
+      compact: true,
+      onClose: () => select.classList.remove("is-open"),
+    });
+  }
+
+  function pick(id: string | undefined) {
+    folderId = id;
+    renderSelect();
+  }
+
+  select.addEventListener("click", openPicker);
 
   urlInput.addEventListener("input", () => {
     const url = parsed();
@@ -226,13 +201,20 @@ export function openBookmarkDialog({ bookmark, onSave, onDelete }: BookmarkDialo
       loadIcon(url);
     }
     await iconLoad;
+    const draft = {
+      name: nameInput.value.trim() || autoName(url),
+      url,
+      icon: iconFor === url ? icon : undefined,
+      folderId,
+    };
     closeDialog();
-    onSave({ name: nameInput.value.trim() || autoName(url), url, icon: iconFor === url ? icon : undefined });
+    if (bookmark) store.updateBookmark(bookmark.id, draft);
+    else store.addBookmark(draft);
   });
 
   foot.querySelector("[data-delete]")?.addEventListener("click", () => {
     closeDialog(false);
-    onDelete?.();
+    if (bookmark) openDeleteBookmarkDialog(store, bookmark);
   });
 
   if (bookmark) {
@@ -240,16 +222,15 @@ export function openBookmarkDialog({ bookmark, onSave, onDelete }: BookmarkDialo
     nameInput.value = bookmark.name;
     if (!bookmark.icon) loadIcon(bookmark.url);
   }
+  renderSelect();
   renderPreview();
 
   const focus = edit ? nameInput : urlInput;
-  showDialog(scrim, focus);
+  showDialog(scrim, focus, () => clearTimeout(timer));
   focus.setSelectionRange(focus.value.length, focus.value.length);
 }
 
-// --- Delete ----------------------------------------------------------------
-
-export function openDeleteDialog(bookmark: Bookmark, onConfirm: () => void) {
+export function openDeleteBookmarkDialog(store: Store, bookmark: Bookmark) {
   const scrim = html(`
     <div class="scrim">
       <div class="modal modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="dialog-title">
@@ -282,98 +263,13 @@ export function openDeleteDialog(bookmark: Bookmark, onConfirm: () => void) {
     chipIcon.textContent = monogram(bookmark.name);
   }
   $(scrim, ".chip-name").textContent = bookmark.name;
-  $(scrim, ".chip-meta").textContent = hostOf(bookmark.url);
+  const folder = store.folders().find((f) => f.id === bookmark.folderId);
+  $(scrim, ".chip-meta").textContent = hostOf(bookmark.url) + (folder ? " · " + folder.name : "");
 
   $(scrim, "[data-confirm]").addEventListener("click", () => {
     closeDialog();
-    onConfirm();
+    store.removeBookmark(bookmark.id);
   });
 
   showDialog(scrim, $(scrim, ".btn-secondary"));
-}
-
-// --- Context menu ----------------------------------------------------------
-
-export interface MenuItem {
-  label: string;
-  icon: string;
-  danger?: boolean;
-  run(): void;
-}
-
-let menu: { el: HTMLElement; opener: Element | null; dispose: () => void } | null = null;
-
-export function closeMenu(restoreFocus = false) {
-  if (!menu) return;
-  const { el, opener, dispose } = menu;
-  menu = null;
-  dispose();
-  el.remove();
-  if (restoreFocus && opener instanceof HTMLElement && opener.isConnected) opener.focus();
-}
-
-export function openMenu(x: number, y: number, items: MenuItem[]) {
-  closeMenu();
-  const opener = document.activeElement;
-
-  const el = html(`<div class="menu" role="menu" tabindex="-1"></div>`);
-  items.forEach((item, i) => {
-    if (item.danger && i > 0) el.append(html(`<hr class="menu-divider">`));
-    const button = html(
-      `<button class="menu-item${item.danger ? " is-danger" : ""}" type="button" role="menuitem">${item.icon}<span></span></button>`,
-    );
-    $(button, "span").textContent = item.label;
-    button.addEventListener("click", () => {
-      closeMenu();
-      item.run();
-    });
-    el.append(button);
-  });
-
-  el.style.visibility = "hidden";
-  document.body.append(el);
-  const { width, height } = el.getBoundingClientRect();
-  el.style.left = Math.max(8, Math.min(x, innerWidth - width - 8)) + "px";
-  el.style.top = Math.max(8, Math.min(y, innerHeight - height - 8)) + "px";
-  el.style.visibility = "";
-
-  const buttons = [...el.querySelectorAll<HTMLElement>(".menu-item")];
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      closeMenu(true);
-    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault();
-      const i = buttons.indexOf(document.activeElement as HTMLElement);
-      const step = e.key === "ArrowDown" ? 1 : -1;
-      buttons[(i + step + buttons.length) % buttons.length]?.focus();
-    } else if (e.key === "Tab") {
-      closeMenu();
-    }
-  };
-  const onOutside = (e: Event) => {
-    if (!el.contains(e.target as Node)) closeMenu();
-  };
-  const onClose = () => closeMenu();
-
-  document.addEventListener("keydown", onKey, true);
-  document.addEventListener("pointerdown", onOutside, true);
-  document.addEventListener("contextmenu", onOutside, true);
-  window.addEventListener("blur", onClose);
-  window.addEventListener("resize", onClose);
-  window.addEventListener("wheel", onClose, { passive: true });
-
-  menu = {
-    el,
-    opener,
-    dispose: () => {
-      document.removeEventListener("keydown", onKey, true);
-      document.removeEventListener("pointerdown", onOutside, true);
-      document.removeEventListener("contextmenu", onOutside, true);
-      window.removeEventListener("blur", onClose);
-      window.removeEventListener("resize", onClose);
-      window.removeEventListener("wheel", onClose);
-    },
-  };
-  el.focus();
 }

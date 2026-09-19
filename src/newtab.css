@@ -41,7 +41,14 @@
 
 * { box-sizing: border-box; margin: 0; }
 
-html { background: var(--bg-base); }
+html {
+  background: var(--bg-base);
+  scrollbar-width: thin;
+  scrollbar-color: var(--neutral-400) transparent;
+}
+.modal,
+.picker-list,
+.folder-grid { scrollbar-width: thin; scrollbar-color: var(--neutral-400) transparent; }
 
 body {
   display: flex;
@@ -260,6 +267,42 @@ body {
   white-space: nowrap;
 }
 
+.tile-folder { border: 0; background: none; cursor: pointer; box-shadow: inset 0 0 0 1px var(--border-default); }
+.tile-folder:hover { box-shadow: inset 0 0 0 1px var(--border-strong); }
+.tile-folder:focus-visible { box-shadow: inset 0 0 0 1px var(--text-primary); }
+
+/* The 40x40 icon grid on folder tiles and previews. */
+.minis {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 4px;
+  width: 40px;
+  height: 40px;
+}
+.mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--neutral-400);
+  color: var(--text-primary);
+  font: 700 12px/1 var(--font-display);
+}
+.mini img { width: 100%; height: 100%; object-fit: cover; }
+.mini-more {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  color: var(--text-secondary);
+  font: 400 9px/12px var(--font-mono);
+}
+.minis-empty { align-items: center; justify-content: center; color: var(--border-strong); }
+.minis-empty svg { width: 24px; height: 24px; }
+
 /* Sits under the row without taking space, so nothing shifts when it appears. */
 .add {
   position: absolute;
@@ -331,6 +374,7 @@ body {
   animation: rise 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .modal-sm { width: 420px; }
+.modal-md { width: 440px; }
 
 .modal-head {
   display: flex;
@@ -506,6 +550,129 @@ body {
 .menu-item:focus-visible { outline: 0; background: var(--bg-hover); color: var(--text-primary); }
 .menu-item.is-danger { color: var(--accent); }
 .menu-divider { height: 1px; border: 0; background: var(--border-subtle); }
+.menu-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-end { color: var(--text-tertiary); font: 400 10px/14px var(--font-mono); letter-spacing: 0.08em; }
+.menu-item.is-selected { background: var(--bg-hover); color: var(--text-primary); }
+.menu-compact .menu-item { gap: 8px; }
+
+.select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.select svg { flex: none; width: 16px; height: 16px; color: var(--text-secondary); }
+.select-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.select.is-empty .select-value { color: var(--text-tertiary); }
+.select.is-open,
+.select:focus-visible { border-color: var(--text-primary); }
+
+.folder-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--bg-base);
+  color: var(--text-tertiary);
+}
+.folder-preview svg { width: 16px; height: 16px; }
+.folder-preview.is-plain { border: 0; background: none; }
+
+.picker { display: flex; flex-direction: column; gap: 12px; }
+.picker-head { display: flex; align-items: center; justify-content: space-between; }
+.picker-count { color: var(--text-tertiary); font: 400 10px/14px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.picker-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 230px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  background: var(--bg-base);
+}
+.picker-empty { padding: 16px; color: var(--text-secondary); font: 400 12px/16px var(--font-sans); text-align: center; }
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.row:hover,
+.row:has(:checked) { background: var(--bg-surface); }
+.row:has(:focus-visible) { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.row-input,
+.option-input { position: absolute; opacity: 0; pointer-events: none; }
+.row-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.row-icon img { width: 100%; height: 100%; object-fit: cover; }
+.row-icon.is-mono { background: var(--neutral-400); font: 700 16px/1 var(--font-display); }
+.row-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 14px/20px var(--font-sans); }
+.row-host { color: var(--text-tertiary); font: 400 10px/14px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+
+.checkbox,
+.radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.checkbox { border-radius: 4px; color: var(--neutral-0); }
+.checkbox svg { width: 12px; height: 12px; visibility: hidden; }
+.row:has(:checked) .checkbox { background: var(--neutral-1000); box-shadow: none; }
+.row:has(:checked) .checkbox svg { visibility: visible; }
+.radio { border-radius: 50%; }
+.option:has(:checked) .radio { box-shadow: inset 0 0 0 1px var(--text-primary); }
+.option:has(:checked) .radio::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--neutral-1000); }
+
+.options { display: flex; flex-direction: column; gap: 8px; }
+.option {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  cursor: pointer;
+}
+.option:has(:checked) { border-color: var(--text-primary); }
+.option:has(:focus-visible) { outline: 1px solid var(--text-primary); outline-offset: 2px; }
+.option-text { display: flex; flex-direction: column; gap: 2px; }
+.option-title { font: 400 14px/20px var(--font-sans); }
+.option-sub { color: var(--text-secondary); font: 400 12px/16px var(--font-sans); }
+
+.folder-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  max-height: 340px;
+  overflow-y: auto;
+}
 
 @keyframes fade { from { opacity: 0; } }
 @keyframes rise { from { opacity: 0; transform: translateY(6px) scale(0.985); } }
