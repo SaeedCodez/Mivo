@@ -1,3 +1,4 @@
+import { settings } from "./settings";
 import type { Bookmark } from "./types";
 import { monogram } from "./url";
 
@@ -11,11 +12,12 @@ export function buildMinis(members: readonly Bookmark[]): HTMLElement {
 
   const overflow = members.length > 4;
   const shown = overflow ? members.slice(0, 3) : members;
+  const useFavicon = settings.get().tiles === "favicon";
 
   for (const b of shown) {
     const mini = document.createElement("span");
     mini.className = "mini";
-    if (b.icon) {
+    if (b.icon && useFavicon) {
       const img = new Image(18, 18);
       img.src = b.icon;
       img.alt = "";
