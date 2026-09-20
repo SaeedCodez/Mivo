@@ -4,15 +4,15 @@ A calm, instant new tab for Chrome. Vanilla TypeScript, no framework, no backgro
 
 ![Mivo new tab](docs/screenshots/background-letter-tiles.webp)
 
-Bookmark styles (favicon or letter tiles), with and without a custom background:
+Favicon tiles, letter tiles, a custom background, and the Settings screen:
 
 <p>
-  <img src="docs/screenshots/default.webp" alt="Mivo with letter tiles" width="49%">
+  <img src="docs/screenshots/default.webp" alt="Mivo with favicon tiles" width="49%">
   <img src="docs/screenshots/letter-tiles.webp" alt="Mivo with letter tiles" width="49%">
 </p>
 <p>
   <img src="docs/screenshots/background.webp" alt="Mivo with a custom background and favicon tiles" width="49%">
-  <img src="docs/screenshots/background-letter-tiles.webp" alt="Mivo with a custom background and letter tiles" width="49%">
+  <img src="docs/screenshots/settings.webp" alt="Settings: clock font and bookmark style" width="49%">
 </p>
 
 ## Develop
